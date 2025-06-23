@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>สมัครสมาชิก Flash Bot</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 90vh; background-color: #f9fafb; margin: 0; padding: 20px; box-sizing: border-box; }
+        .container { background-color: #fff; padding: 25px 30px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
+        h2 { text-align: center; color: #333; margin-bottom: 20px; font-size: 22px; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; text-align: left; font-size: 14px; }
+        input[type="password"], input[type="email"], input[type="tel"] { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background-color: #f1c40f; color: #2c3e50; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: bold; transition: background-color 0.3s ease; }
+        button:hover { background-color: #e1b308; }
+        button:disabled { background-color: #ccc; color: #666; cursor: not-allowed; }
+        .message { margin-top: 20px; text-align: center; padding: 12px; border-radius: 6px; font-size: 14px; line-height: 1.5; }
+        .message.success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb;}
+        .message.error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb;}
+        .message:empty { display: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>สมัครสมาชิก Flash Bot</h2>
+        <form id="registerForm">
+            <input type="hidden" id="salesRefId">
+            <div>
+                <label for="regEmail">อีเมล:</label>
+                <input type="email" id="regEmail" required>
+            </div>
+            <div>
+                <label for="regPassword">รหัสผ่าน (อย่างน้อย 6 ตัวอักษร):</label>
+                <input type="password" id="regPassword" required>
+            </div>
+             <div>
+                <label for="confirmPassword">ยืนยันรหัสผ่าน:</label>
+                <input type="password" id="confirmPassword" required>
+            </div>
+            <div>
+                <label for="regPhoneNumber">เบอร์โทรศัพท์:</label>
+                <input type="tel" id="regPhoneNumber" required>
+            </div>
+            <button type="submit" id="registerButton">สมัครสมาชิก</button>
+        </form>
+        <div id="messageArea" class="message"></div>
+    </div>
+
+    <script>
+        // **สำคัญ: แก้ไข URL นี้ให้เป็น Web App URL ที่ถูกต้องของคุณ**
+        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwWIcRczMCQGCIjoZZMXcg25AYGqozTi8tpJOIuadW5XwY8ou49G2302z9EnI593wk/exec'; 
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('registerForm');
+            const salesRefIdInput = document.getElementById('salesRefId');
+            const registerButton = document.getElementById('registerButton');
+            const messageArea = document.getElementById('messageArea');
+
+            // ดึง ref (Sales ID) จาก URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            const ref = urlParams.get('ref');
+
+            if (ref) {
+                salesRefIdInput.value = ref;
+                console.log('Referral ID found:', ref);
+            } else {
+                messageArea.textContent = 'ลิงก์สำหรับสมัครสมาชิกไม่ถูกต้อง (ไม่พบรหัสผู้แนะนำ)';
+                messageArea.className = 'message error';
+                registerButton.disabled = true;
+                console.error("Referral ID (ref) is missing from URL.");
+                return;
+            }
+
+            form.addEventListener('submit', async (event) => {
+                event.preventDefault();
+
+                const email = document.getElementById('regEmail').value.trim();
+                const password = document.getElementById('regPassword').value;
+                const confirmPassword = document.getElementById('confirmPassword').value;
+                const phoneNumber = document.getElementById('regPhoneNumber').value.trim();
+                const salesId = salesRefIdInput.value;
+
+                messageArea.textContent = '';
+                messageArea.className = 'message';
+
+                if (!email || !password || !phoneNumber) {
+                    messageArea.textContent = 'กรุณากรอกข้อมูลให้ครบถ้วน';
+                    messageArea.className = 'message error';
+                    return;
+                }
+                if (password.length < 6) {
+                    messageArea.textContent = 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร';
+                    messageArea.className = 'message error';
+                    return;
+                }
+                if (password !== confirmPassword) {
+                    messageArea.textContent = 'รหัสผ่านและการยืนยันรหัสผ่านไม่ตรงกัน';
+                    messageArea.className = 'message error';
+                    return;
+                }
+
+                registerButton.disabled = true;
+                registerButton.textContent = 'กำลังสมัคร...';
+
+                try {
+                    const payload = {
+                        action: 'registerUser',
+                        userData: {
+                            email: email,
+                            password: password,
+                            phoneNumber: phoneNumber,
+                            salesId: salesId // ส่ง salesId ไปพร้อมกับข้อมูล
+                        },
+                        createdBy: 'sales' // ระบุว่าสร้างโดย Sales
+                    };
+
+                    const response = await fetch(WEB_APP_URL, {
+                        method: 'POST',
+                        mode: 'cors',
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        const errorResult = await response.json().catch(() => ({ error: `HTTP error! Status: ${response.status}` }));
+                        throw new Error(errorResult.error);
+                    }
+                    
+                    const result = await response.json();
+
+                    if (result.success) {
+                        messageArea.textContent = 'สมัครสมาชิกสำเร็จ! คุณสามารถปิดหน้านี้ และกลับไปเข้าสู่ระบบผ่าน Extension ได้เลย';
+                        messageArea.className = 'message success';
+                        form.style.display = 'none'; // ซ่อนฟอร์มหลังสมัครสำเร็จ
+                    } else {
+                        throw new Error(result.error);
+                    }
+                } catch (error) {
+                    messageArea.textContent = `เกิดข้อผิดพลาด: ${error.message}`;
+                    messageArea.className = 'message error';
+                    registerButton.disabled = false;
+                    registerButton.textContent = 'สมัครสมาชิก';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
