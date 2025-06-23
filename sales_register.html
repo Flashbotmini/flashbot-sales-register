@@ -127,7 +127,7 @@
                     const result = await response.json();
 
                     if (result.success) {
-                        messageArea.textContent = 'สมัครสมาชิกสำเร็จ! คุณสามารถปิดหน้านี้ และกลับไปเข้าสู่ระบบผ่าน Extension ได้เลย';
+                        messageArea.textContent = 'สมัครสมาชิกสำเร็จ! คุณสามารถปิดหน้านี้ ยืนยันตัวตนในกล่องจดหมด ถ้าไม่พบลองดูที่จดหมายขยะ และคลิกเพื่อยืนยันบัญชี ครับ';
                         messageArea.className = 'message success';
                         form.style.display = 'none'; // ซ่อนฟอร์มหลังสมัครสำเร็จ
                     } else {
